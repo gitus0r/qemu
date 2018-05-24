@@ -178,6 +178,7 @@ static bool list_data_dirs;
 static const char *watchdog;
 static const char *qtest_chrdev;
 static const char *qtest_log;
+int pio_telnet = 0;
 
 static int has_defaults = 1;
 static int default_serial = 1;
@@ -3569,6 +3570,9 @@ void qemu_init(int argc, char **argv, char **envp)
                     }
                     break;
                 }
+            case QEMU_OPTION_piotelnet:
+		pio_telnet = 1;
+		break;
             case QEMU_OPTION_qtest:
                 qtest_chrdev = optarg;
                 break;
