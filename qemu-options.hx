@@ -1641,6 +1641,17 @@ debug a Linux kernel with a serial console. Use @key{C-a h} for help on
 switching between the console and monitor.
 ETEXI
 
+
+DEF("piotelnet", 0, QEMU_OPTION_piotelnet,
+    "-piotelnet	open a telnet server at port 444444 for the LEDs and the LCD on the Portux920T-MiniPC. Only useful there\n",
+    QEMU_ARCH_ALL)
+STEXI
+@item -piotelnet
+@findex -piotelnet
+Opens a telnet server at port 444444 for the LEDs and the LCD on
+the Portux920T-MiniPC. Only useful there.
+ETEXI
+
 DEF("curses", 0, QEMU_OPTION_curses,
     "-curses         shorthand for -display curses\n",
     QEMU_ARCH_ALL)
