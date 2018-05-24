@@ -1,5 +1,6 @@
 softmmu_ss.add(when: 'CONFIG_CADENCE', if_true: files('cadence_uart.c'))
 softmmu_ss.add(when: 'CONFIG_CMSDK_APB_UART', if_true: files('cmsdk-apb-uart.c'))
+softmmu_ss.add(when: 'CONFIG_PORTUX', if_true: files('at91dbgu.c', 'at91usart.c'))
 softmmu_ss.add(when: 'CONFIG_ESCC', if_true: files('escc.c'))
 softmmu_ss.add(when: 'CONFIG_ETRAXFS', if_true: files('etraxfs_ser.c'))
 softmmu_ss.add(when: 'CONFIG_GRLIB', if_true: files('grlib_apbuart.c'))
