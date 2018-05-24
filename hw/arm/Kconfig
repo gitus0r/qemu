@@ -88,6 +88,11 @@ config MUSCA
     select SPLIT_IRQ
     select UNIMP
 
+config PORTUX
+    bool
+    select AT91EMAC
+    select AT91G20EMAC
+
 config MUSICPAL
     bool
     select BITBANG_I2C

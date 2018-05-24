@@ -790,6 +790,10 @@ static void do_cpu_reset(void *opaque)
             }
         }
         arm_rebuild_hflags(env);
+        /* Portux920T Special Case: We want to have a SP after booting for techGI 3 */
+		if(info->board_id==0x310){
+			env->regs[13]=0x200F00;
+		}
     }
 }
 

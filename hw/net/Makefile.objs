@@ -32,6 +32,9 @@ common-obj-$(CONFIG_SUNHME) += sunhme.o
 common-obj-$(CONFIG_FTGMAC100) += ftgmac100.o
 common-obj-$(CONFIG_SUNGEM) += sungem.o
 
+common-obj-$(CONFIG_AT91EMAC) += at91emac.o
+common-obj-$(CONFIG_AT91G20EMAC) += at91g20emac.o
+
 obj-$(CONFIG_ETRAXFS) += etraxfs_eth.o
 obj-$(CONFIG_COLDFIRE) += mcf_fec.o
 obj-$(CONFIG_MILKYMIST) += milkymist-minimac2.o
