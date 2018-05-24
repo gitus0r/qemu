@@ -163,6 +163,7 @@ bool boot_strict;
 uint8_t *boot_splash_filedata;
 int only_migratable; /* turn it off unless user states otherwise */
 bool wakeup_suspend_enabled;
+int pio_telnet = 0;
 
 int icount_align_option;
 
@@ -3691,6 +3692,9 @@ void qemu_init(int argc, char **argv, char **envp)
                     }
                     break;
                 }
+            case QEMU_OPTION_piotelnet:
+		pio_telnet = 1;
+		break;
             case QEMU_OPTION_qtest:
                 qtest_chrdev = optarg;
                 break;
