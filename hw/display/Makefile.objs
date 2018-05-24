@@ -32,4 +32,6 @@ obj-$(CONFIG_CG3) += cg3.o
 
 obj-$(CONFIG_VGA) += vga.o
 
+obj-y += at91display.o
+
 common-obj-$(CONFIG_QXL) += qxl.o qxl-logger.o qxl-render.o

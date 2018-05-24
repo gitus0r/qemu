@@ -182,6 +182,7 @@ static bool boot_strict;
 uint8_t *boot_splash_filedata;
 size_t boot_splash_filedata_size;
 uint8_t qemu_extra_params_fw[2];
+int pio_telnet = 0;
 
 typedef struct FWBootEntry FWBootEntry;
 
@@ -3910,6 +3911,9 @@ int main(int argc, char **argv, char **envp)
                     }
                     break;
                 }
+            case QEMU_OPTION_piotelnet:
+		pio_telnet = 1;
+		break;
             case QEMU_OPTION_qtest:
                 qtest_chrdev = optarg;
                 break;

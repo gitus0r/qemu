@@ -8,6 +8,12 @@ struct MemoryRegion;
 
 /* Devices that have nowhere better to go.  */
 
+/* at91emac.c */
+void at91emac_init1(NICInfo *, uint32_t, qemu_irq);
+
+/* at91g20emac.c */
+void at91g20emac_init1(NICInfo *, uint32_t, qemu_irq);
+
 /* smc91c111.c */
 void smc91c111_init(NICInfo *, uint32_t, qemu_irq);
 

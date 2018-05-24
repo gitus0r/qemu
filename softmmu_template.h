@@ -69,9 +69,11 @@
 #ifdef SOFTMMU_CODE_ACCESS
 #define READ_ACCESS_TYPE 2
 #define ADDR_READ addr_code
+#define IO_MEM_READ io_mem_exec
 #else
 #define READ_ACCESS_TYPE 0
 #define ADDR_READ addr_read
+#define IO_MEM_READ io_mem_read
 #endif
 
 #if DATA_SIZE == 8
@@ -133,7 +135,7 @@ static inline DATA_TYPE glue(io_read, SUFFIX)(CPUArchState *env,
     }
 
     cpu->mem_io_vaddr = addr;
-    io_mem_read(mr, physaddr, &val, 1 << SHIFT);
+    IO_MEM_READ(mr, physaddr, &val, 1 << SHIFT);
     return val;
 }
 #endif
@@ -523,6 +525,7 @@ glue(glue(helper_st, SUFFIX), MMUSUFFIX)(CPUArchState *env, target_ulong addr,
 #undef TGT_LE
 #undef CPU_BE
 #undef CPU_LE
+#undef IO_MEM_READ
 #undef helper_le_ld_name
 #undef helper_be_ld_name
 #undef helper_le_lds_name

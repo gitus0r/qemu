@@ -165,6 +165,10 @@ typedef struct CPUARMState {
     uint64_t elr_el[4]; /* AArch64 exception link regs  */
     uint64_t sp_el[4]; /* AArch64 banked stack pointers */
 
+    /* Hack for Portux 920T Memory Controller */
+    uint32_t asr;
+    uint32_t aasr;
+
     /* System control coprocessor (cp15) */
     struct {
         uint32_t c0_cpuid;
