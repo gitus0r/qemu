@@ -46,6 +46,9 @@ static gboolean io_watch_poll_prepare(GSource *source,
     IOWatchPoll *iwp = io_watch_poll_from_source(source);
     bool now_active = iwp->fd_can_read(iwp->opaque) > 0;
     bool was_active = iwp->src != NULL;
+    
+    *timeout = 10;
+
     if (was_active == now_active) {
         return FALSE;
     }

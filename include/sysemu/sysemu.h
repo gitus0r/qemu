@@ -73,7 +73,7 @@ Chardev *serial_hd(int i);
 
 /* parallel ports */
 
-#define MAX_PARALLEL_PORTS 3
+#define MAX_PARALLEL_PORTS 7
 
 extern Chardev *parallel_hds[MAX_PARALLEL_PORTS];
 
