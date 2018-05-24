@@ -478,6 +478,8 @@ static int mux_chr_can_read(void *opaque)
     MuxDriver *d = chr->opaque;
     int m = d->focus;
 
+    mux_chr_accept_input (opaque);
+
     if ((d->prod[m] - d->cons[m]) < MUX_BUFFER_SIZE)
         return 1;
     if (d->chr_can_read[m])
@@ -709,6 +711,9 @@ static gboolean io_watch_poll_prepare(GSource *source, gint *timeout_)
     IOWatchPoll *iwp = io_watch_poll_from_source(source);
     bool now_active = iwp->fd_can_read(iwp->opaque) > 0;
     bool was_active = iwp->src != NULL;
+
+    *timeout_ = 10;
+
     if (was_active == now_active) {
         return FALSE;
     }
