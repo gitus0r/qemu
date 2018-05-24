@@ -197,6 +197,8 @@ static int mux_chr_can_read(void *opaque)
 {
     MuxChardev *d = MUX_CHARDEV(opaque);
     int m = d->focus;
+    mux_chr_accept_input (opaque);
+
     CharBackend *be = d->backends[m];
 
     if ((d->prod[m] - d->cons[m]) < MUX_BUFFER_SIZE) {
