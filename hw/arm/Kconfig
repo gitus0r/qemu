@@ -80,6 +80,11 @@ config MAINSTONE
     select PFLASH_CFI01
     select SMC91C111
 
+config PORTUX
+    bool
+    select AT91EMAC
+    select AT91G20EMAC
+
 config MUSCA
     bool
     select ARMSSE
