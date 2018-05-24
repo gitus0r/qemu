@@ -882,6 +882,17 @@ with a serial console.  Use @key{C-a h} for help on switching between
 the console and monitor.
 ETEXI
 
+
+DEF("piotelnet", 0, QEMU_OPTION_piotelnet,
+    "-piotelnet	open a telnet server at port 444444 for the LEDs and the LCD on the Portux920T-MiniPC. Only useful there\n",
+    QEMU_ARCH_ALL)
+STEXI
+@item -piotelnet
+@findex -piotelnet
+Opens a telnet server at port 444444 for the LEDs and the LCD on
+the Portux920T-MiniPC. Only useful there.
+ETEXI
+
 DEF("curses", 0, QEMU_OPTION_curses,
     "-curses         use a curses/ncurses interface instead of SDL\n",
     QEMU_ARCH_ALL)
@@ -1511,7 +1522,7 @@ NIC is created.  QEMU can emulate several different models of network card.
 Valid values for @var{type} are
 @code{virtio}, @code{i82551}, @code{i82557b}, @code{i82559er},
 @code{ne2k_pci}, @code{ne2k_isa}, @code{pcnet}, @code{rtl8139},
-@code{e1000}, @code{smc91c111}, @code{lance} and @code{mcf_fec}.
+@code{e1000}, @code{smc91c111}, @code{lance}, @code{at91emac}, @code{at91g20emac} and @code{mcf_fec}.
 Not all devices are supported on all targets.  Use @code{-net nic,model=help}
 for a list of available devices for your target.
 
