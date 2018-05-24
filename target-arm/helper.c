@@ -4171,6 +4171,46 @@ int arm_cpu_handle_mmu_fault(CPUState *cs, vaddr address,
     return 1;
 }
 
+void arm_cpu_unassigned_access(CPUState *cs, hwaddr addr,
+                               bool is_write, bool is_exec, int unused,
+                               unsigned size)
+{
+    ARMCPU *cpu = ARM_CPU(cs);
+    CPUARMState *env = &cpu->env;
+
+    /* Hack for Portux 920T Memory Controller */
+    env->aasr = addr;
+    env->asr &= 0xff000000; /* Clear everything except saved abort sources */
+
+    env->asr |= 0x01010000; /* Abort source: ARM920T (FIXME) */
+    env->asr |= 0x1; /* Undefined address */
+    switch(size) {
+        case 1:  env->asr |= 0x0000; break; /* byte */
+        case 2:  env->asr |= 0x0100; break; /* half-word */
+        case 4:  env->asr |= 0x0200; break; /* word */
+        default: env->asr |= 0x0300; break; /* reserved */
+    }
+    if (is_exec == true) {
+        env->asr |= 0x0800; /* Code fetch */
+    } else if (is_write == true) {
+        env->asr |= 0x0400; /* Data write */
+    } else {
+        env->asr |= 0x0000; /* Data read */
+    }
+
+    if (is_exec == true) {
+        cs->exception_index = EXCP_PREFETCH_ABORT;
+        if (env->regs[15] < 0x20) {
+            hw_error("Trying to execute non-existing exception handler!\n");
+        }
+    } else {
+        cs->exception_index = EXCP_DATA_ABORT;
+    }
+
+    cpu_restore_state(cs, GETPC());
+    cpu_loop_exit(cs);
+}
+
 hwaddr arm_cpu_get_phys_page_debug(CPUState *cs, vaddr addr)
 {
     ARMCPU *cpu = ARM_CPU(cs);
