@@ -1018,13 +1018,13 @@ static void memory_region_initfn(Object *obj)
 }
 
 static uint64_t unassigned_mem_read(void *opaque, hwaddr addr,
-                                    unsigned size)
+                                    unsigned size, bool is_exec)
 {
 #ifdef DEBUG_UNASSIGNED
     printf("Unassigned mem read " TARGET_FMT_plx "\n", addr);
 #endif
     if (current_cpu != NULL) {
-        cpu_unassigned_access(current_cpu, addr, false, false, 0, size);
+        cpu_unassigned_access(current_cpu, addr, false, is_exec, 0, size);
     }
     return 0;
 }
@@ -1110,10 +1110,11 @@ static uint64_t memory_region_dispatch_read1(MemoryRegion *mr,
 static bool memory_region_dispatch_read(MemoryRegion *mr,
                                         hwaddr addr,
                                         uint64_t *pval,
-                                        unsigned size)
+                                        unsigned size,
+                                        bool is_exec)
 {
     if (!memory_region_access_valid(mr, addr, size, false)) {
-        *pval = unassigned_mem_read(mr, addr, size);
+        *pval = unassigned_mem_read(mr, addr, size, is_exec);
         return true;
     }
 
@@ -1965,9 +1966,14 @@ void address_space_destroy(AddressSpace *as)
     g_free(as->ioeventfds);
 }
 
+bool io_mem_exec(MemoryRegion *mr, hwaddr addr, uint64_t *pval, unsigned size)
+{
+    return memory_region_dispatch_read(mr, addr, pval, size, true);
+}
+
 bool io_mem_read(MemoryRegion *mr, hwaddr addr, uint64_t *pval, unsigned size)
 {
-    return memory_region_dispatch_read(mr, addr, pval, size);
+    return memory_region_dispatch_read(mr, addr, pval, size, false);
 }
 
 bool io_mem_write(MemoryRegion *mr, hwaddr addr,
