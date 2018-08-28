@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 
+#include "qemu/osdep.h"
 #include "hw/sysbus.h"
 
 #define TYPE_AT91_INTOR "at91_intor"
@@ -79,7 +80,7 @@ static void at91_intor_class_init(ObjectClass *klass, void *data)
     DeviceClass *dc = DEVICE_CLASS(klass);
     SysBusDeviceClass *k = SYS_BUS_DEVICE_CLASS(klass);
     k->init = at91_intor_init;
-    dc->cannot_instantiate_with_device_add_yet = true; /* FIXME explain why */
+    dc->user_creatable = false; /* FIXME explain why */
     dc->reset = at91_intor_reset;
     dc->vmsd = &vmstate_at91_intor;
 }
