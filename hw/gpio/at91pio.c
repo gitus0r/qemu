@@ -1,8 +1,10 @@
 /**
  * Portux920T PIO a,b and c
  */
+
+#include "qemu/osdep.h"
 #include "hw/sysbus.h"
-#include "sysemu/char.h"
+#include "chardev/char-fe.h"
 
 #define TYPE_AT91PIO "at91pio"
 #define AT91PIO(obj) OBJECT_CHECK(at91pio_state, (obj), TYPE_AT91PIO)
@@ -31,7 +33,7 @@ typedef struct {
 } at91pio_state;
 
 //KBS-Special-Telnet-Client
-CharDriverState *char_kbs;
+Chardev *char_kbs;
 extern int pio_telnet;
 
 static uint64_t at91pio_read(void *opaque, hwaddr offset, unsigned size)
@@ -246,7 +248,7 @@ static void at91pio_write(void *opaque, hwaddr offset, uint64_t value, unsigned 
             //TODO: Nur wenn wirklich etwas neugezeichnet werden soll
             if(pio_telnet){
                 // Clear Telnet Display
-                qemu_chr_fe_printf(char_kbs,"\033[2J\033[1;1H");
+                qemu_chr_fe_printf(char_kbs->be,"\033[2J\033[1;1H");
 
                 /**
                  * LED CONTROL
@@ -265,22 +267,22 @@ static void at91pio_write(void *opaque, hwaddr offset, uint64_t value, unsigned 
                 if((pioc_ctrl&1)!=1){
                     strcpy(red_led, "\033[1;40m\033[1;31m_\033[0m");
                 }
-                qemu_chr_fe_printf(char_kbs,"\r\nLED: %s%s%s",yellow_led, green_led, red_led);
+                qemu_chr_fe_printf(char_kbs->be,"\r\nLED: %s%s%s",yellow_led, green_led, red_led);
 
                 /**
                  * DISPLAY
                  */
 
-                qemu_chr_fe_printf(char_kbs,"\r\n*** DISPLAY ****\r\n");
+                qemu_chr_fe_printf(char_kbs->be,"\r\n*** DISPLAY ****\r\n");
                 int row_starts[]={0,64,16,80};
                 for(i=0;i<4;i++){
                     /*for(j=0;j<16;j++){
-                        qemu_chr_fe_printf(char_kbs,"%c",s->display[j+row_starts[i]]);
+                        qemu_chr_fe_printf(char_kbs->be,"%c",s->display[j+row_starts[i]]);
                     }*/
-                    qemu_chr_fe_write(char_kbs,&(s->display[row_starts[i]]),16);
-                    qemu_chr_fe_printf(char_kbs,"\r\n");
+                    qemu_chr_fe_write(char_kbs->be,&(s->display[row_starts[i]]),16);
+                    qemu_chr_fe_printf(char_kbs->be,"\r\n");
                 }
-                qemu_chr_fe_printf(char_kbs,"*END OF DISPLAY*\r\n");
+                qemu_chr_fe_printf(char_kbs->be,"*END OF DISPLAY*\r\n");
             }
 }
 
@@ -291,6 +293,7 @@ static const MemoryRegionOps at91pio_ops = {
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
+#ifdef LRK_UNUSED
 static const VMStateDescription vmstate_pio = {
     .name = "at91pio",
     .version_id = 1,
@@ -311,6 +314,7 @@ static const VMStateDescription vmstate_pio = {
         VMSTATE_END_OF_LIST()
     }
 };
+#endif
 
 static int at91pio_init(SysBusDevice *dev)
 {
@@ -325,7 +329,7 @@ static int at91pio_init(SysBusDevice *dev)
     s->display_pos=0;
     //Telnet-Client for LCD and LED Output. Port 44444
     if(pio_telnet!=0){
-    char_kbs = qemu_chr_new("kbs_telnet", "telnet:localhost:44444,server", NULL);
+    char_kbs = qemu_chr_new("kbs_telnet", "telnet:localhost:44444,server");
     }
     return 0;
 }
