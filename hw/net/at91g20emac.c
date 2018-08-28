@@ -27,6 +27,7 @@
  * WARNING!
  * This is written for the AT91RM9200 which has a different behavior than all
  * the other (or most, we don't know) AT91-boards. So have a look in your documentation.
+ * XXX wrong...
  */
 
 /*
@@ -35,6 +36,7 @@
  * sending, ...
  */
 
+#include "qemu/osdep.h"
 #include "hw/sysbus.h"
 #include "net/net.h"
 #include "hw/devices.h"
@@ -646,7 +648,7 @@ static void at91g20emac_cleanup(NetClientState *nc)
 }
 
 static NetClientInfo net_at91g20emac_info = {
-    .type = NET_CLIENT_OPTIONS_KIND_NIC,
+    .type = NET_CLIENT_DRIVER_NIC,
     .size = sizeof(NICState),
     .can_receive = at91g20emac_can_receive,
     .receive = at91g20emac_receive,
