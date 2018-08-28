@@ -5,9 +5,9 @@
  * Every baud rate work; no parity checks.
  */
 
-
+#include "qemu/osdep.h"
 #include "hw/sysbus.h"
-#include "sysemu/char.h"
+#include "chardev/char-fe.h"
 
 #define TYPE_AT91DBGU "at91dbgu"
 #define AT91DBGU(obj) OBJECT_CHECK(at91dbgu_state, (obj), TYPE_AT91DBGU)
@@ -16,7 +16,7 @@ typedef struct {
     SysBusDevice parent_obj;
     MemoryRegion iomem;
     qemu_irq irq;
-    CharDriverState *chr;
+    CharBackend chr;
 
     // DBGU Register
     uint32_t cr;
@@ -39,6 +39,7 @@ typedef struct {
 
 } at91dbgu_state;
 
+#ifdef LRK_UNUSED
 static const VMStateDescription vmstate_at91dbgu = {
     .name = "at91dbgu",
     .version_id = 1,
@@ -63,6 +64,7 @@ static const VMStateDescription vmstate_at91dbgu = {
         VMSTATE_END_OF_LIST()
     }
 };
+#endif
 
 #define DBGU_CR     0x00
 #define DBGU_MR     0x04
@@ -131,9 +133,7 @@ static void at91dbgu_send(void *opaque, const uint8_t *buf, int size)
 {
     at91dbgu_state *s = opaque;
 
-    if (s->chr) {
-        qemu_chr_fe_write(s->chr, buf, size);
-    }
+    qemu_chr_fe_write(&s->chr, buf, size);
 }
 
 static void at91dbgu_update(at91dbgu_state *s)
@@ -375,8 +375,6 @@ static int at91dbgu_init(SysBusDevice *dev)
     sysbus_init_mmio(dev, &s->iomem);
     sysbus_init_irq(dev, &s->irq);
 
-    s->chr = qemu_char_get_next_serial();
-
     // DBGU
     s->cr = TXEN | RXEN; /* Should be zero */
     s->mr = 0x0;
@@ -396,17 +394,23 @@ static int at91dbgu_init(SysBusDevice *dev)
     s->periph_tncr = 0x0;
     s->periph_ptsr = 0x0;
 
-    if (s->chr) {
-        qemu_chr_add_handlers(s->chr, at91dbgu_can_receive, at91dbgu_receive, at91dbgu_event, s);
-    }
+    qemu_chr_fe_set_handlers(&s->chr, at91dbgu_can_receive, at91dbgu_receive,
+            at91dbgu_event, NULL, s, NULL, true);
 
     return 0;
 }
 
+static Property at91dbug_properties[] = {
+    DEFINE_PROP_CHR("chardev", at91dbgu_state, chr),
+    DEFINE_PROP_END_OF_LIST(),
+};
+
 static void at91dbgu_class_init(ObjectClass *klass, void *data)
 {
     SysBusDeviceClass *sdc = SYS_BUS_DEVICE_CLASS(klass);
+    DeviceClass *dc = DEVICE_CLASS(klass);
     sdc->init = at91dbgu_init;
+    dc->props = at91dbug_properties;
 }
 
 static const TypeInfo at91dbgu_info = {
