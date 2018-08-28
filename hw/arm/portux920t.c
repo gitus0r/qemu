@@ -12,6 +12,8 @@
  *
  */
 
+#include "qemu/osdep.h"
+#include "cpu.h"
 #include "hw/sysbus.h"
 #include "hw/devices.h"
 #include "hw/arm/arm.h"
@@ -19,7 +21,7 @@
 #include "exec/address-spaces.h"
 #include "net/net.h"
 
-static ARMCPU *cpu;
+static ARMCPU *cpu; // XXX shouldn't be global probably
 
 /*
  * ++++++++++++++++++++++++++++++++++++
@@ -29,7 +31,7 @@ static ARMCPU *cpu;
  * Everything that triggers an operation on the memory
  * regions of the 920T is declared here
  */
-static MemoryRegion *ram_alias;
+static MemoryRegion *ram_alias; // XX shouldn't be global probably
 
 #define TYPE_PORTUX920MC "portux920mc"
 #define PORTUX920MC(obj) OBJECT_CHECK(portux920mc_state, (obj), TYPE_PORTUX920MC)
@@ -76,15 +78,16 @@ static void do_remap(bool ctrl)
 static uint64_t portux920mc_read(void *opaque, hwaddr offset, unsigned size)
 {
     portux920mc_state *s = PORTUX920MC(opaque);
-    uint32_t asr;
+//    uint32_t asr;
 
     switch (offset) {
-    case 0x4: // Abort Status Register
-        asr = cpu->env.asr;
-        cpu->env.asr &= ~0x0f000000;
-        return asr;
-    case 0x8: // Abort Address Status Register
-        return cpu->env.aasr;
+// XXX We don't have global cpu object and neither env with asr and aasr
+//    case 0x4: // Abort Status Register
+//        asr = cpu->env.asr;
+//        cpu->env.asr &= ~0x0f000000;
+//        return asr;
+//    case 0x8: // Abort Address Status Register
+//        return cpu->env.aasr;
     case 0xC: // Master Priority Register
         return s->mpr;
     default:
@@ -118,8 +121,8 @@ static void portux920mc_reset(DeviceState *dev) {
     portux920mc_state *s = PORTUX920MC(dev);
 
     s->mpr = 0x3210;
-    cpu->env.asr = 0;
-    cpu->env.aasr = 0;
+//    cpu->env.asr = 0; XXX
+//    cpu->env.aasr = 0;
     do_remap(false);
 }
 
@@ -170,8 +173,8 @@ static struct arm_boot_info portux920t_binfo;
 
 static void portux920t_init(MachineState *machine)
 {
+    Object *cpuobj;
     ram_addr_t ram_size = machine->ram_size;
-    const char *cpu_model = machine->cpu_model;
     const char *kernel_filename = machine->kernel_filename;
     const char *kernel_cmdline = machine->kernel_cmdline;
     const char *initrd_filename = machine->initrd_filename;
@@ -185,16 +188,16 @@ static void portux920t_init(MachineState *machine)
 
     /* Warning! This is in fact just a copy of the arm926 with a V4T chip set
        instead of a V5! */
-    cpu_model = "arm920";
-    cpu = cpu_arm_init(cpu_model);
+    cpuobj = object_new(machine->cpu_type);
+    cpu = ARM_CPU(cpuobj);
     if (!cpu) {
         fprintf(stderr, "Unable to find CPU definition\n");
         exit(1);
     }
 
     /* Initialize 1MB RAM and 64MB RAM */
-    memory_region_init_ram(ram, NULL, "internal.ram", 0x100000);
-    memory_region_init_ram(ram2, NULL, "64MB.ram", 0x4000000); //Memory-Size is fixed at 64M
+    memory_region_init_ram(ram, NULL, "internal.ram", 0x100000, NULL);
+    memory_region_init_ram(ram2, NULL, "64MB.ram", 0x4000000, NULL); //Memory-Size is fixed at 64M
     //memory_region_init_ram(nand_flash, NULL, "LCD.ram", 0x40); //Cute 64Byte, no not K just B
     vmstate_register_ram_global(ram);
     vmstate_register_ram_global(ram2);
@@ -282,20 +285,31 @@ static void portux920t_init(MachineState *machine)
     arm_load_kernel(cpu, &portux920t_binfo);
 }
 
-static QEMUMachine portux920t_machine = {
-    .name = "portux920t",
-    .desc = "ARM Taskit Portux920t (ARM920)",
-    .init = portux920t_init,
+static void portux920t_class_init(ObjectClass *oc, void *data)
+{
+    MachineClass *mc = MACHINE_CLASS(oc);
+    
+    mc->desc = "ARM Taskit Portux920t (ARM920)";
+    mc->init = portux920t_init;
+    //mc->block_default_type = IF_SCSI; XXX
+    //mc->ignore_memory_transaction_failures = true;
+    mc->default_cpu_type = ARM_CPU_TYPE_NAME("arm920");
+}
+
+static const TypeInfo portux920t_type = {
+    .name = MACHINE_TYPE_NAME("portux920t"),
+    .parent = TYPE_MACHINE,
+    .class_init = portux920t_class_init,
 };
 
 
 /* Register the machine */
 static void portux920t_machine_init(void)
 {
-    qemu_register_machine(&portux920t_machine);
+    type_register_static(&portux920t_type);
 }
 
-machine_init(portux920t_machine_init);
+type_init(portux920t_machine_init);
 
 
 /* Initialize Memory Controller Class */
