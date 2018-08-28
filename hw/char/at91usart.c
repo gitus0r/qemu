@@ -2,8 +2,10 @@
  * Portux920t USART
  */
 
+#include "qemu/osdep.h"
 #include "hw/sysbus.h"
-#include "sysemu/char.h"
+#include "chardev/char.h"
+#include "chardev/char-fe.h"
 
 /* Control Register */
 #define CR_RXEN (1<<4)
@@ -33,7 +35,7 @@ typedef struct {
     uint32_t imr;
     uint32_t csr;
     uint32_t rhr;
-    CharDriverState *chr;
+    CharBackend chr;
     qemu_irq irq;
     const unsigned char *id;
     //DMA Register
@@ -150,13 +152,11 @@ static void at91usart_write(void *opaque, hwaddr offset,
         break;
     case 0x1C: /* US_THR */
         ch = value;
-        if(s->chr){
-            if(s->cr & CR_TXEN){
-                s->csr&=~CSR_TXRDY; //upon writing a char into the thr register set transmitter ready bit in the csr to 0
-                qemu_chr_fe_write(s->chr, &ch, 1);
-                if(!(s->cr&CR_TXDIS))s->csr|=CSR_TXRDY;// set transmitter ready bit in the csr wieder to 1
-                at91usart_update(s,1);
-            }
+        if(s->cr & CR_TXEN){
+            s->csr&=~CSR_TXRDY; //upon writing a char into the thr register set transmitter ready bit in the csr to 0
+            qemu_chr_fe_write(&s->chr, &ch, 1);
+            if(!(s->cr&CR_TXDIS))s->csr|=CSR_TXRDY;// set transmitter ready bit in the csr wieder to 1
+            at91usart_update(s,1);
         }
         break;
     case 0x20: /* US_BRGR (not implemented) */
@@ -214,11 +214,9 @@ static void at91usart_write(void *opaque, hwaddr offset,
                 s->periph_ptsr|=(1<<8);
                 void * buf = malloc(sizeof(uint8_t)*1024);
                 cpu_physical_memory_read(s->periph_tpr,buf,s->periph_tcr);
-                if(s->chr){
-                    //qemu_chr_fe_open(s->chr);
-                    qemu_chr_fe_write(s->chr,buf,s->periph_tcr);
-                    //qemu_chr_fe_close(s->chr);
-                }
+                //qemu_chr_fe_open(&s->chr);
+                qemu_chr_fe_write(&s->chr,buf,s->periph_tcr);
+                //qemu_chr_fe_close(&s->chr);
             }
         }
 
@@ -296,22 +294,26 @@ static int at91usart_init(SysBusDevice *sbd)
     memory_region_init_io(&s->iomem, OBJECT(s), &at91usart_ops, s, "at91usart", 0x1000);
     sysbus_init_mmio(sbd, &s->iomem);
     sysbus_init_irq(sbd, &s->irq);
-    s->chr = qemu_char_get_next_serial();
     s->cr = 0x0;
     s->csr = (1<<4); //Always set the End of Transfer signal to active
-    if (s->chr) {
-        qemu_chr_add_handlers(s->chr, at91usart_can_receive, at91usart_receive,
-                              at91usart_event, s);
-    }
+    qemu_chr_fe_set_handlers(&s->chr, at91usart_can_receive, at91usart_receive,
+                              at91usart_event, NULL, s, NULL, true);
     vmstate_register(dev, -1, &vmstate_at91usart, s);
     return 0;
 }
 
+static Property at91usart_properties[] = {
+    DEFINE_PROP_CHR("chardev", at91usart_state, chr),
+    DEFINE_PROP_END_OF_LIST(),
+};
+
 static void at91usart_arm_class_init(ObjectClass *klass, void *data)
 {
     SysBusDeviceClass *sdc = SYS_BUS_DEVICE_CLASS(klass);
+    DeviceClass *dc = DEVICE_CLASS(klass);
 
     sdc->init = at91usart_init;
+    dc->props = at91usart_properties;
 }
 
 static const TypeInfo at91usart_info = {
