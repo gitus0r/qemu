@@ -4,7 +4,8 @@
  *
  */
 
-
+#include "qemu/osdep.h"
+#include "cpu.h"
 #include "hw/sysbus.h"
 #include "hw/arm/arm.h"
 #include "hw/boards.h"
@@ -19,8 +20,8 @@ static struct arm_boot_info portuxg20_binfo;
 
 static void portuxg20_init(MachineState *machine)
 {
+    Object *cpuobj;
     ram_addr_t ram_size = machine->ram_size;
-    const char *cpu_model = machine->cpu_model;
     const char *kernel_filename = machine->kernel_filename;
     const char *kernel_cmdline = machine->kernel_cmdline;
     const char *initrd_filename = machine->initrd_filename;
@@ -33,17 +34,18 @@ static void portuxg20_init(MachineState *machine)
     qemu_irq aic_sys[32];
     DeviceState *dev;
 
-    cpu_model = "arm926";
-    cpu = cpu_arm_init(cpu_model);
+    cpuobj = object_new(machine->cpu_type);
+
+    cpu = ARM_CPU(cpuobj);
     if (!cpu) {
         fprintf(stderr, "Unable to find CPU definition\n");
         exit(1);
     }
 
     /* Initialize RAM */
-    memory_region_init_ram(sram0, NULL, "Internal SRAM0", 0x4000); // 16kB sram0
-    memory_region_init_ram(sram1, NULL, "Internal SRAM1", 0x4000); // 16kB sram1
-    memory_region_init_ram(sdram, NULL, "SDRAM", 0x8000000);         // 128MB sdram
+    memory_region_init_ram(sram0, NULL, "Internal SRAM0", 0x4000, NULL); // 16kB sram0
+    memory_region_init_ram(sram1, NULL, "Internal SRAM1", 0x4000, NULL); // 16kB sram1
+    memory_region_init_ram(sdram, NULL, "SDRAM", 0x8000000, NULL);         // 128MB sdram
     vmstate_register_ram_global(sram0);
     vmstate_register_ram_global(sram1);
     vmstate_register_ram_global(sdram);
@@ -108,18 +110,26 @@ static void portuxg20_init(MachineState *machine)
     arm_load_kernel(cpu, &portuxg20_binfo);
 }
 
+static void portuxg20_class_init(ObjectClass *oc, void *data)
+{
+    MachineClass *mc = MACHINE_CLASS(oc);
+    
+    mc->desc = "ARM Taskit PortuxG20 (ARM926EJ-S)";
+    mc->init = portuxg20_init;
+    //mc->block_default_type = IF_SCSI; XXX ?
+    //mc->ignore_memory_transaction_failures = true;
+    mc->default_cpu_type = ARM_CPU_TYPE_NAME("arm920");
+}
 
-static QEMUMachine portuxg20_machine = {
-    .name = "portuxg20",
-    .desc = "ARM Taskit PortuxG20 (ARM926EJ-S)",
-    .init = portuxg20_init,
+static const TypeInfo portuxg20_type = {
+    .name = MACHINE_TYPE_NAME("portuxg20"),
+    .parent = TYPE_MACHINE,
+    .class_init = portuxg20_class_init,
 };
-
-
 
 static void portuxg20_machine_init(void)
 {
-    qemu_register_machine(&portuxg20_machine);
+    type_register_static(&portuxg20_type);
 }
 
-machine_init(portuxg20_machine_init);
+type_init(portuxg20_machine_init);
