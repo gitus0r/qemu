@@ -11,6 +11,7 @@
  * This code is licenced under the GPL.
  */
 
+#include "qemu/osdep.h"
 #include <stdio.h>
 #include <stddef.h>
 
@@ -361,7 +362,7 @@ static void at91aic_class_init(ObjectClass *klass, void *data)
     DeviceClass *dc = DEVICE_CLASS(klass);
     SysBusDeviceClass *k = SYS_BUS_DEVICE_CLASS(klass);
     k->init = at91aic_init;
-    dc->cannot_instantiate_with_device_add_yet = true;
+    dc->user_creatable = false;
     dc->reset = at91aic_reset;
     dc->vmsd = &vmstate_at91aic;
 }
