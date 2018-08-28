@@ -35,6 +35,7 @@
  * sending, ...
  */
 
+#include "qemu/osdep.h"
 #include "hw/sysbus.h"
 #include "net/net.h"
 #include "hw/devices.h"
@@ -647,7 +648,7 @@ static void at91emac_cleanup(NetClientState *nc)
 }
 
 static NetClientInfo net_at91emac_info = {
-    .type = NET_CLIENT_OPTIONS_KIND_NIC,
+    .type = NET_CLIENT_DRIVER_NIC,
     .size = sizeof(NICState),
     .can_receive = at91emac_can_receive,
     .receive = at91emac_receive,
