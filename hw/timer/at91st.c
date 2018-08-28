@@ -2,6 +2,7 @@
  * Atmel AT91RM9200 System Timer (ST)
  */
 
+#include "qemu/osdep.h"
 #include "hw/sysbus.h"
 #include "qemu/timer.h"
 #include "sysemu/sysemu.h"
@@ -98,7 +99,7 @@ static void st_set_alarm(at91st_state *s)
     }
 
     /* piv == 0x10000 => 2 second interval */
-    t += get_ticks_per_sec() * piv * 2 / 0x10000;
+    t += NANOSECONDS_PER_SECOND * piv * 2 / 0x10000;
 
     timer_mod(s->st_timer, t);
 }
@@ -121,7 +122,7 @@ static void wd_set_alarm(at91st_state *s)
         wdv = 0x10000;
 
     /* wdv == 0x10000 => 256 second interval */
-    t += get_ticks_per_sec() * wdv * 256 / 0x10000;
+    t += NANOSECONDS_PER_SECOND * wdv * 256 / 0x10000;
 
     timer_mod(s->wd_timer, t);
 }
@@ -131,7 +132,7 @@ static void wd_interrupt(void *opaque)
     at91st_state *s = opaque;
     s->sr |= WDOVF;
     if (s->wdmr & RSTEN) {
-        qemu_system_reset_request();
+        qemu_system_reset_request(SHUTDOWN_CAUSE_GUEST_RESET);
     }
     wd_set_alarm(s);
     at91st_update(s);
@@ -147,7 +148,7 @@ static void rt_set_alarm(at91st_state *s)
         rtpres = 0x10000;
 
     /* rtpres == 0x10000 => 2 second interval */
-    t += get_ticks_per_sec() * rtpres * 2 / 0x10000;
+    t += NANOSECONDS_PER_SECOND * rtpres * 2 / 0x10000;
 
     timer_mod(s->rt_timer, t);
 }
@@ -282,7 +283,7 @@ static void at91st_class_init(ObjectClass *klass, void *data)
     SysBusDeviceClass *k = SYS_BUS_DEVICE_CLASS(klass);
 
     k->init = at91st_init;
-    dc->cannot_instantiate_with_device_add_yet = true; /* FIXME explain why */
+    dc->user_creatable = false; /* FIXME explain why */
     dc->reset = at91st_reset;
     dc->vmsd = &vmstate_at91st;
 }

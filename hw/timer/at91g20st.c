@@ -3,8 +3,10 @@
  * All timers!
  */
 
+#include "qemu/osdep.h"
 #include "hw/sysbus.h"
 #include "qemu/timer.h"
+#include "qemu/cutils.h"
 
 #define TYPE_AT91G20ST "at91g20st"
 #define AT91G20ST(obj) OBJECT_CHECK(at91g20st_state, (obj), TYPE_AT91G20ST)
@@ -153,8 +155,8 @@ static void wd_set_alarm(at91g20st_state *s)
 
         now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
 
-        ticks = (((s->wdt_mr &0xFFF))/32768) + now / get_ticks_per_sec();
-        timer_mod(s->wd_timer, now + ticks*get_ticks_per_sec()/1000);
+        ticks = (((s->wdt_mr &0xFFF))/32768) + now / NANOSECONDS_PER_SECOND;
+        timer_mod(s->wd_timer, now + ticks*NANOSECONDS_PER_SECOND/1000);
 }
 
 static void wd_interrupt(void * opaque)
@@ -246,9 +248,10 @@ static void at91g20st_write(void * opaque, hwaddr offset,
         s->rtt_vr+=(tmp -  s->time_last_change)/(hz*1000000);
         s->time_last_change=tmp;
         s->rtt_mr = value;
-        if(value & (1<<18)) //Reset and (maybe) restart clock
+        if(value & (1<<18)) { //Reset and (maybe) restart clock
             s->startup_real_time = tmp;
-            s->rtt_vr=0;
+            s->rtt_vr=0; // XXX this wasn't guarded by if, now is -- correct?
+        }
         if(value & (1<<17))
             realtime_increment_set_alarm(s);
         if(value & (1<<16))
@@ -336,7 +339,7 @@ static void at91g20st_class_init(ObjectClass *klass, void *data)
     SysBusDeviceClass *k = SYS_BUS_DEVICE_CLASS(klass);
 
     k->init = at91g20st_init;
-    dc->cannot_instantiate_with_device_add_yet = true; /* FIXME explain why */
+    dc->user_creatable = false; /* FIXME explain why */
     dc->vmsd = &vmstate_at91g20st;
 }
 
