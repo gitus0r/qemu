@@ -1,6 +1,8 @@
 /**
  * Portux920T display a,b and c
  */
+
+#include "qemu/osdep.h"
 #include "hw/sysbus.h"
 
 #define TYPE_AT91DISPLAY "at91display"
@@ -43,6 +45,7 @@ static const MemoryRegionOps display_ops = {
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
+#ifdef LRK_UNUSED
 static const VMStateDescription vmstate_display = {
     .name = "at91display",
     .version_id = 1,
@@ -53,6 +56,7 @@ static const VMStateDescription vmstate_display = {
         VMSTATE_END_OF_LIST()
     }
 };
+#endif
 
 static int display_init(SysBusDevice *dev)
 {
