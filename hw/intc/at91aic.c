@@ -23,6 +23,7 @@
 
 typedef struct {
     SysBusDevice parent_obj;
+    
     MemoryRegion iomem;
     qemu_irq irq;
     qemu_irq fiq;
@@ -343,25 +344,25 @@ static void at91aic_set_irq(void *opaque, int irq, int level) {
     at91aic_update(s);
 }
 
-static int at91aic_init(SysBusDevice *sbd)
+static void at91aic_init(Object *obj)
 {
-    DeviceState *dev = DEVICE(sbd);
-    at91aic_state *s = AT91AIC(dev);
-    memory_region_init_io(&s->iomem, OBJECT(s), &at91aic_ops, s, "at91aic", 0x1FF);
+    DeviceState *dev = DEVICE(obj);
+    at91aic_state *s = AT91AIC(obj);
+    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
+    
+    memory_region_init_io(&s->iomem, obj, &at91aic_ops, s, "at91aic", 0x1FF);
     sysbus_init_mmio(sbd, &s->iomem);
     qdev_init_gpio_in(dev, at91aic_set_irq, 32);
     sysbus_init_irq(sbd, &s->irq);
     sysbus_init_irq(sbd, &s->fiq);
 
     at91aic_reset(dev);
-    return 0;
 }
 
 static void at91aic_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
-    SysBusDeviceClass *k = SYS_BUS_DEVICE_CLASS(klass);
-    k->init = at91aic_init;
+    
     dc->user_creatable = false;
     dc->reset = at91aic_reset;
     dc->vmsd = &vmstate_at91aic;
@@ -371,6 +372,7 @@ static const TypeInfo at91aic_info = {
     .name = TYPE_AT91AIC,
     .parent = TYPE_SYS_BUS_DEVICE,
     .instance_size = sizeof(at91aic_state),
+    .instance_init = at91aic_init,
     .class_init = at91aic_class_init,
 };
 
