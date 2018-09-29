@@ -286,20 +286,24 @@ static const VMStateDescription vmstate_at91usart = {
     }
 };
 
-static int at91usart_init(SysBusDevice *sbd)
+static void at91usart_init(Object *obj)
 {
-    DeviceState *dev = DEVICE(sbd);
-    at91usart_state *s = AT91USART(dev);
+    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
+    at91usart_state *s = AT91USART(obj);
 
     memory_region_init_io(&s->iomem, OBJECT(s), &at91usart_ops, s, "at91usart", 0x1000);
     sysbus_init_mmio(sbd, &s->iomem);
     sysbus_init_irq(sbd, &s->irq);
     s->cr = 0x0;
     s->csr = (1<<4); //Always set the End of Transfer signal to active
+}
+
+static void at91usart_realize(DeviceState *dev, Error **errp)
+{
+    at91usart_state *s = AT91USART(dev);
+    
     qemu_chr_fe_set_handlers(&s->chr, at91usart_can_receive, at91usart_receive,
                               at91usart_event, NULL, s, NULL, true);
-    vmstate_register(dev, -1, &vmstate_at91usart, s);
-    return 0;
 }
 
 static Property at91usart_properties[] = {
@@ -307,12 +311,12 @@ static Property at91usart_properties[] = {
     DEFINE_PROP_END_OF_LIST(),
 };
 
-static void at91usart_arm_class_init(ObjectClass *klass, void *data)
+static void at91usart_class_init(ObjectClass *klass, void *data)
 {
-    SysBusDeviceClass *sdc = SYS_BUS_DEVICE_CLASS(klass);
     DeviceClass *dc = DEVICE_CLASS(klass);
 
-    sdc->init = at91usart_init;
+    dc->realize = at91usart_realize;
+    dc->vmsd = &vmstate_at91usart;
     dc->props = at91usart_properties;
 }
 
@@ -320,7 +324,8 @@ static const TypeInfo at91usart_info = {
     .name          = TYPE_AT91USART,
     .parent        = TYPE_SYS_BUS_DEVICE,
     .instance_size = sizeof(at91usart_state),
-    .class_init    = at91usart_arm_class_init,
+    .instance_init = at91usart_init,
+    .class_init    = at91usart_class_init,
 };
 
 
