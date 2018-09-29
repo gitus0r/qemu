@@ -258,31 +258,30 @@ static void at91st_reset(DeviceState *dev) {
     at91st_update(s);
 }
 
-static int at91st_init(SysBusDevice *dev)
+static void at91st_init(Object *obj)
 {
-    at91st_state *s = AT91ST(dev);
+    DeviceState *dev = DEVICE(obj);
+    at91st_state *s = AT91ST(obj);
+    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
     struct tm tm;
 
-    memory_region_init_io(&s->iomem, OBJECT(s), &at91st_ops, s, "at91st", 0x1FF);
-    sysbus_init_mmio(dev, &s->iomem);
+    memory_region_init_io(&s->iomem, obj, &at91st_ops, s, "at91st", 0x1FF);
+    sysbus_init_mmio(sbd, &s->iomem);
 
-    sysbus_init_irq(dev, &s->irq);
+    sysbus_init_irq(sbd, &s->irq);
     qemu_get_timedate(&tm, 0);
 
     s->st_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, st_interrupt, s);
     s->wd_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, wd_interrupt, s);
     s->rt_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, rt_interrupt, s);
 
-    at91st_reset(DEVICE(dev));
-    return 0;
+    at91st_reset(dev); // is this needed ?
 }
 
 static void at91st_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
-    SysBusDeviceClass *k = SYS_BUS_DEVICE_CLASS(klass);
 
-    k->init = at91st_init;
     dc->user_creatable = false; /* FIXME explain why */
     dc->reset = at91st_reset;
     dc->vmsd = &vmstate_at91st;
@@ -292,6 +291,7 @@ static const TypeInfo at91st_info = {
     .name          = TYPE_AT91ST,
     .parent        = TYPE_SYS_BUS_DEVICE,
     .instance_size = sizeof(at91st_state),
+    .instance_init = at91st_init,
     .class_init    = at91st_class_init,
 };
 
