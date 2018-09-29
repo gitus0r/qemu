@@ -13,6 +13,7 @@
  */
 
 #include "qemu/osdep.h"
+#include "qapi/error.h"
 #include "cpu.h"
 #include "hw/sysbus.h"
 #include "hw/devices.h"
@@ -190,6 +191,8 @@ static void portux920t_init(MachineState *machine)
     /* Warning! This is in fact just a copy of the arm926 with a V4T chip set
        instead of a V5! */
     cpuobj = object_new(machine->cpu_type);
+    object_property_set_bool(cpuobj, true, "realized", &error_fatal);
+    
     cpu = ARM_CPU(cpuobj);
     if (!cpu) {
         fprintf(stderr, "Unable to find CPU definition\n");
@@ -200,8 +203,8 @@ static void portux920t_init(MachineState *machine)
     memory_region_init_ram(ram, NULL, "internal.ram", 0x100000, NULL);
     memory_region_init_ram(ram2, NULL, "64MB.ram", 0x4000000, NULL); //Memory-Size is fixed at 64M
     //memory_region_init_ram(nand_flash, NULL, "LCD.ram", 0x40); //Cute 64Byte, no not K just B
-    vmstate_register_ram_global(ram);
-    vmstate_register_ram_global(ram2);
+    //vmstate_register_ram_global(ram);
+    //vmstate_register_ram_global(ram2);
     /* 1MB ram at address zero.  */
     memory_region_add_subregion(sysmem, 0x200000, ram);
     memory_region_set_enabled(ram, true);

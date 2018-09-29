@@ -10785,6 +10785,14 @@ static bool get_phys_addr_lpae(CPUARMState *env, target_ulong address,
             goto do_fault;
         }
     }
+<<<<<<< HEAD
+=======
+    
+    cpu_restore_state(cs, GETPC(), true /* XXX should TB be interrupted? */);
+    cpu_loop_exit(cs);
+}
+#endif
+>>>>>>> Misc
 
     if (param.using64k) {
         stride = 13;
