@@ -6,85 +6,87 @@
 #include "hw/sysbus.h"
 
 #define TYPE_AT91DISPLAY "at91display"
-#define AT91DISPLAY(obj) OBJECT_CHECK(display_state, (obj), TYPE_AT91DISPLAY)
+#define AT91DISPLAY(obj) OBJECT_CHECK(at91display_state, (obj), TYPE_AT91DISPLAY)
 
 typedef struct {
     SysBusDevice parent_obj;
     MemoryRegion iomem;
     uint32_t charreg;
-} display_state;
+} at91display_state;
 
-static uint64_t display_read(void *opaque, hwaddr offset, unsigned size)
+static uint64_t at91display_read(void *opaque, hwaddr offset, unsigned size)
 {
     return 0;
 }
 
-static void display_write(void *opaque, hwaddr offset, uint64_t value, unsigned size)
+static void at91display_write(void *opaque, hwaddr offset, uint64_t value, unsigned size)
 {
-    display_state *s = (display_state *)opaque;
+    at91display_state *s = (at91display_state *)opaque;
 
     //TODO: Don't write if Chipselect is LOW?
     /*printf("\nW:%c",(char)value);
     fflush(0);*/
     switch (offset) {
-        case 0: //display enable register
-            s->charreg = value; //der value wird ins display status register eingetragen
+        case 0: //at91display enable register
+            s->charreg = value; //der value wird ins at91display status register eingetragen
             unsigned int buf[1];
             buf[0]=value;
             cpu_physical_memory_write(0xfffff500,buf,1);
             break;
         default:
-            fprintf(stderr, "display A Write: Bad offset %x\n", (int)offset);
+            fprintf(stderr, "at91display A Write: Bad offset %x\n", (int)offset);
     }
 }
 
 
-static const MemoryRegionOps display_ops = {
-    .read = display_read,
-    .write = display_write,
+static const MemoryRegionOps at91display_ops = {
+    .read = at91display_read,
+    .write = at91display_write,
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
-#ifdef LRK_UNUSED
-static const VMStateDescription vmstate_display = {
+static const VMStateDescription vmstate_at91display = {
     .name = "at91display",
     .version_id = 1,
     .minimum_version_id = 1,
     .minimum_version_id_old = 1,
     .fields      = (VMStateField[]) {
-        VMSTATE_UINT32(charreg, display_state),
+        VMSTATE_UINT32(charreg, at91display_state),
         VMSTATE_END_OF_LIST()
     }
 };
-#endif
 
-static int display_init(SysBusDevice *dev)
+static void at91display_init(Object *obj)
 {
-    display_state *s = AT91DISPLAY(dev);
-    memory_region_init_io(&s->iomem, OBJECT(s), &display_ops, s, "at91display", 0x40);
-    sysbus_init_mmio(dev, &s->iomem);
-    return 0;
+    at91display_state *s = AT91DISPLAY(obj);
+    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
+    
+    memory_region_init_io(&s->iomem, obj, &at91display_ops, s, "at91display", 0x40);
+    sysbus_init_mmio(sbd, &s->iomem);
 }
 
-static void display_class_init(ObjectClass *klass, void *data)
+static void at91display_class_init(ObjectClass *klass, void *data)
 {
-    SysBusDeviceClass *sdc = SYS_BUS_DEVICE_CLASS(klass);
-    sdc->init = display_init;
+    DeviceClass *dc = DEVICE_CLASS(klass);
+    
+    set_bit(DEVICE_CATEGORY_DISPLAY, dc->categories);
+    dc->vmsd = &vmstate_at91display;
 }
 
-static const TypeInfo display_info = {
+static const TypeInfo at91display_info = {
     .name          = TYPE_AT91DISPLAY,
     .parent        = TYPE_SYS_BUS_DEVICE,
-    .instance_size = sizeof(display_state),
-    .class_init    = display_class_init,
+    .instance_size = sizeof(at91display_state),
+    .instance_init = at91display_init,
+    .class_init    = at91display_class_init,
 };
 
-static void display_register_types(void)
+static void at91display_register_types(void)
 {
     //Achtung! Hier können auch mehrere verschiedene TypeInfos angegeben werden!
-    type_register_static(&display_info);
+    type_register_static(&at91display_info);
 }
 
 
 
-type_init(display_register_types)
+type_init(at91display_register_types)
