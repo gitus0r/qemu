@@ -39,7 +39,6 @@ typedef struct {
 
 } at91dbgu_state;
 
-#ifdef LRK_UNUSED
 static const VMStateDescription vmstate_at91dbgu = {
     .name = "at91dbgu",
     .version_id = 1,
@@ -64,7 +63,6 @@ static const VMStateDescription vmstate_at91dbgu = {
         VMSTATE_END_OF_LIST()
     }
 };
-#endif
 
 #define DBGU_CR     0x00
 #define DBGU_MR     0x04
@@ -368,12 +366,14 @@ static const MemoryRegionOps at91dbgu_ops = {
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
-static int at91dbgu_init(SysBusDevice *dev)
+static void at91dbgu_init(Object *obj)
 {
-    at91dbgu_state *s = AT91DBGU(dev);
+    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
+    at91dbgu_state *s = AT91DBGU(obj);
+    
     memory_region_init_io(&s->iomem, OBJECT(s), &at91dbgu_ops, s, "at91dbgu", 0x200);
-    sysbus_init_mmio(dev, &s->iomem);
-    sysbus_init_irq(dev, &s->irq);
+    sysbus_init_mmio(sbd, &s->iomem);
+    sysbus_init_irq(sbd, &s->irq);
 
     // DBGU
     s->cr = TXEN | RXEN; /* Should be zero */
@@ -393,30 +393,35 @@ static int at91dbgu_init(SysBusDevice *dev)
     s->periph_tnpr = 0x0;
     s->periph_tncr = 0x0;
     s->periph_ptsr = 0x0;
-
-    qemu_chr_fe_set_handlers(&s->chr, at91dbgu_can_receive, at91dbgu_receive,
-            at91dbgu_event, NULL, s, NULL, true);
-
-    return 0;
 }
 
-static Property at91dbug_properties[] = {
+static void at91dbgu_realize(DeviceState *dev, Error **errp)
+{
+    at91dbgu_state *s = AT91DBGU(dev);
+    
+    qemu_chr_fe_set_handlers(&s->chr, at91dbgu_can_receive, at91dbgu_receive,
+            at91dbgu_event, NULL, s, NULL, true);
+}
+
+static Property at91dbgu_properties[] = {
     DEFINE_PROP_CHR("chardev", at91dbgu_state, chr),
     DEFINE_PROP_END_OF_LIST(),
 };
 
 static void at91dbgu_class_init(ObjectClass *klass, void *data)
 {
-    SysBusDeviceClass *sdc = SYS_BUS_DEVICE_CLASS(klass);
     DeviceClass *dc = DEVICE_CLASS(klass);
-    sdc->init = at91dbgu_init;
-    dc->props = at91dbug_properties;
+    
+    dc->realize = at91dbgu_realize;
+    dc->vmsd = &vmstate_at91dbgu;
+    dc->props = at91dbgu_properties;
 }
 
 static const TypeInfo at91dbgu_info = {
     .name          = TYPE_AT91DBGU,
     .parent        = TYPE_SYS_BUS_DEVICE,
     .instance_size = sizeof(at91dbgu_state),
+    .instance_init = at91dbgu_init,
     .class_init    = at91dbgu_class_init,
 };
 
