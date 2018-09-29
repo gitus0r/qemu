@@ -53,16 +53,16 @@ static void at91_intor_reset(DeviceState *dev)
     s->sources = 0;
 }
 
-static int at91_intor_init(SysBusDevice *sbd)
+static void at91_intor_init(Object *obj)
 {
-    DeviceState *dev = DEVICE(sbd);
-    at91_intor_state *s = AT91_INTOR(dev);
+    DeviceState *dev = DEVICE(obj);
+    at91_intor_state *s = AT91_INTOR(obj);
+    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
 
     qdev_init_gpio_in(dev, at91_intor_set_irq, 32);
     sysbus_init_irq(sbd, &s->parent_irq);
 
     at91_intor_reset(dev);    // FIXME: Is this necessary?
-    return 0;
 }
 
 static const VMStateDescription vmstate_at91_intor = {
@@ -78,8 +78,7 @@ static const VMStateDescription vmstate_at91_intor = {
 static void at91_intor_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
-    SysBusDeviceClass *k = SYS_BUS_DEVICE_CLASS(klass);
-    k->init = at91_intor_init;
+    
     dc->user_creatable = false; /* FIXME explain why */
     dc->reset = at91_intor_reset;
     dc->vmsd = &vmstate_at91_intor;
@@ -89,6 +88,7 @@ static const TypeInfo at91_intor_info = {
     .name = TYPE_AT91_INTOR,
     .parent = TYPE_SYS_BUS_DEVICE,
     .instance_size = sizeof(at91_intor_state),
+    .instance_init = at91_intor_init,
     .class_init = at91_intor_class_init,
 };
 

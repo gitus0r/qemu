@@ -80,16 +80,16 @@ static void do_remap(bool ctrl)
 static uint64_t portux920mc_read(void *opaque, hwaddr offset, unsigned size)
 {
     portux920mc_state *s = PORTUX920MC(opaque);
-//    uint32_t asr;
+    uint32_t asr;
 
     switch (offset) {
 // XXX We don't have global cpu object and neither env with asr and aasr
-//    case 0x4: // Abort Status Register
-//        asr = cpu->env.asr;
-//        cpu->env.asr &= ~0x0f000000;
-//        return asr;
-//    case 0x8: // Abort Address Status Register
-//        return cpu->env.aasr;
+    case 0x4: // Abort Status Register
+        asr = cpu->env.asr;
+        cpu->env.asr &= ~0x0f000000;
+        return asr;
+    case 0x8: // Abort Address Status Register
+        return cpu->env.aasr;
     case 0xC: // Master Priority Register
         return s->mpr;
     default:
@@ -123,8 +123,8 @@ static void portux920mc_reset(DeviceState *dev) {
     portux920mc_state *s = PORTUX920MC(dev);
 
     s->mpr = 0x3210;
-//    cpu->env.asr = 0; XXX
-//    cpu->env.aasr = 0;
+    cpu->env.asr = 0; // XXX
+    cpu->env.aasr = 0;
     do_remap(false);
 }
 

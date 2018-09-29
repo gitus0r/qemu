@@ -293,8 +293,7 @@ static const MemoryRegionOps at91pio_ops = {
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
-#ifdef LRK_UNUSED
-static const VMStateDescription vmstate_pio = {
+static const VMStateDescription vmstate_at91pio = {
     .name = "at91pio",
     .version_id = 1,
     .minimum_version_id = 1,
@@ -314,36 +313,38 @@ static const VMStateDescription vmstate_pio = {
         VMSTATE_END_OF_LIST()
     }
 };
-#endif
 
-static int at91pio_init(SysBusDevice *dev)
+static void at91pio_init(Object *obj)
 {
-    at91pio_state *s = AT91PIO(dev);
-    memory_region_init_io(&s->iomem, OBJECT(s), &at91pio_ops, s, "at91pio", 0x5FF);
-    sysbus_init_mmio(dev, &s->iomem);
-    sysbus_init_irq(dev, &s->irq);
-    int i = 0;
-    for(i=0; i<128; i++){
-    s->display[i]='\0';
+    at91pio_state *s = AT91PIO(obj);
+    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
+    
+    memory_region_init_io(&s->iomem, obj, &at91pio_ops, s, "at91pio", 0x5FF);
+    sysbus_init_mmio(sbd, &s->iomem);
+    sysbus_init_irq(sbd, &s->irq);
+    
+    for (int i=0; i<128; i++){
+        s->display[i]='\0';
     }
     s->display_pos=0;
     //Telnet-Client for LCD and LED Output. Port 44444
     if(pio_telnet!=0){
-    char_kbs = qemu_chr_new("kbs_telnet", "telnet:localhost:44444,server");
+        char_kbs = qemu_chr_new("kbs_telnet", "telnet:localhost:44444,server");
     }
-    return 0;
 }
 
 static void at91pio_class_init(ObjectClass *klass, void *data)
 {
-    SysBusDeviceClass *sdc = SYS_BUS_DEVICE_CLASS(klass);
-    sdc->init = at91pio_init;
+    DeviceClass *dc = DEVICE_CLASS(klass);
+    
+    dc->vmsd = &vmstate_at91pio;
 }
 
 static const TypeInfo at91pio_info = {
     .name          = TYPE_AT91PIO,
     .parent        = TYPE_SYS_BUS_DEVICE,
     .instance_size = sizeof(at91pio_state),
+    .instance_init = at91pio_init,
     .class_init    = at91pio_class_init,
 };
 
