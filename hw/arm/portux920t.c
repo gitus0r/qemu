@@ -17,6 +17,7 @@
 #include "cpu.h"
 #include "hw/sysbus.h"
 #include "hw/devices.h"
+#include "sysemu/sysemu.h"
 #include "hw/arm/arm.h"
 #include "hw/boards.h"
 #include "exec/address-spaces.h"
@@ -263,13 +264,13 @@ static void portux920t_init(MachineState *machine)
      * Periphery
      * +++++++++
      */
-    at91dbgu_create(0xFFFFF200, aic_sys[0], NULL);
+    at91dbgu_create(0xFFFFF200, aic_sys[0], serial_hd(0));
     sysbus_create_simple("at91pio", 0xFFFFF400, NULL);
     sysbus_create_simple("at91st", 0xFFFFFD00, aic_sys[1]);
-    at91usart_create(0xFFFC0000, NULL, NULL);
-    at91usart_create(0xFFFC4000, NULL, NULL);
-    at91usart_create(0xFFFC8000, NULL, NULL);
-    at91usart_create(0xFFFCC000, NULL, NULL);
+    at91usart_create(0xFFFC0000, NULL, serial_hd(1));
+    at91usart_create(0xFFFC4000, NULL, serial_hd(2));
+    at91usart_create(0xFFFC8000, NULL, serial_hd(3));
+    at91usart_create(0xFFFCC000, NULL, serial_hd(4));
 
     sysbus_create_simple("at91display", 0x40000000, NULL);
 
