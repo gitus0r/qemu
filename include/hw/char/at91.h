@@ -15,6 +15,8 @@
 #ifndef HW_AT91_H
 #define HW_AT91_H
 
+#include "hw/qdev-properties.h"
+
 static inline DeviceState *at91dbgu_create(hwaddr addr,
                                         qemu_irq irq,
                                         Chardev *chr)

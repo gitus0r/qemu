@@ -126,3 +126,9 @@ config CAN_SJA1000
     default y if PCI_DEVICES
     depends on PCI
     select CAN_BUS
+
+config AT91EMAC
+    bool
+
+config AT91G20EMAC
+    bool

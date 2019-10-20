@@ -15,16 +15,15 @@
 #include "qemu/osdep.h"
 #include "qapi/error.h"
 #include "cpu.h"
+#include "migration/vmstate.h"
 #include "hw/sysbus.h"
-#include "hw/devices.h"
+#include "hw/net/at91emac.h"
 #include "sysemu/sysemu.h"
-#include "hw/arm/arm.h"
+#include "hw/arm/boot.h"
 #include "hw/boards.h"
 #include "exec/address-spaces.h"
 #include "net/net.h"
 #include "hw/char/at91.h"
-
-static ARMCPU *cpu; // XXX shouldn't be global probably
 
 /*
  * ++++++++++++++++++++++++++++++++++++
@@ -44,6 +43,8 @@ typedef struct {
     MemoryRegion iomem;
     qemu_irq irq;
 
+    uint32_t asr;
+    uint32_t aasr;
     uint32_t mpr;
 } portux920mc_state;
 
@@ -84,13 +85,12 @@ static uint64_t portux920mc_read(void *opaque, hwaddr offset, unsigned size)
     uint32_t asr;
 
     switch (offset) {
-// XXX We don't have global cpu object and neither env with asr and aasr
     case 0x4: // Abort Status Register
-        asr = cpu->env.asr;
-        cpu->env.asr &= ~0x0f000000;
+        asr = s->asr;
+        s->asr &= ~0x0f000000;
         return asr;
     case 0x8: // Abort Address Status Register
-        return cpu->env.aasr;
+        return s->aasr;
     case 0xC: // Master Priority Register
         return s->mpr;
     default:
@@ -124,8 +124,8 @@ static void portux920mc_reset(DeviceState *dev) {
     portux920mc_state *s = PORTUX920MC(dev);
 
     s->mpr = 0x3210;
-    cpu->env.asr = 0; // XXX
-    cpu->env.aasr = 0;
+    s->asr = 0;
+    s->aasr = 0;
     do_remap(false);
 }
 
@@ -142,18 +142,15 @@ static const MemoryRegionOps portux920mc_ops = {
 /*
  * Initialization of the memory regions and the IRQ
  */
-static int portux920mc_init(SysBusDevice *sbd)
+static void portux920mc_realize(DeviceState *dev, Error **errp)
 {
-    DeviceState *dev = DEVICE(sbd);
     portux920mc_state *s = PORTUX920MC(dev);
 
     memory_region_init_io(&s->iomem, OBJECT(s), &portux920mc_ops, s, "portux920mc", 0x50);
-    sysbus_init_mmio(sbd, &s->iomem);
-    sysbus_init_irq(sbd, &s->irq);
+    sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
+    sysbus_init_irq(SYS_BUS_DEVICE(dev), &s->irq);
 
     portux920mc_reset(dev);
-
-    return 0;
 }
 
 /*
@@ -178,9 +175,6 @@ static void portux920t_init(MachineState *machine)
 {
     Object *cpuobj;
     ram_addr_t ram_size = machine->ram_size;
-    const char *kernel_filename = machine->kernel_filename;
-    const char *kernel_cmdline = machine->kernel_cmdline;
-    const char *initrd_filename = machine->initrd_filename;
     MemoryRegion *sysmem = get_system_memory();
     MemoryRegion *ram = g_new(MemoryRegion, 1); //1MB Internal Ram
     MemoryRegion *ram2 = g_new(MemoryRegion, 1); //64MB External Ram
@@ -188,6 +182,7 @@ static void portux920t_init(MachineState *machine)
     qemu_irq aic[32];
     qemu_irq aic_sys[32];
     DeviceState *dev;
+    ARMCPU *cpu;
 
     /* Warning! This is in fact just a copy of the arm926 with a V4T chip set
        instead of a V5! */
@@ -281,13 +276,10 @@ static void portux920t_init(MachineState *machine)
      * +++++++++++++
      */
     portux920t_binfo.ram_size = ram_size;
-    portux920t_binfo.kernel_filename = kernel_filename;
-    portux920t_binfo.kernel_cmdline = kernel_cmdline;
-    portux920t_binfo.initrd_filename = initrd_filename;
     portux920t_binfo.board_id = 0x310; //found at arm.linux.org.uk/developer/machines/
     portux920t_binfo.loader_start = 0x20000000; //Start executing at 0x20000000 instead of 0x0
 
-    arm_load_kernel(cpu, &portux920t_binfo);
+    arm_load_kernel(cpu, machine, &portux920t_binfo);
 }
 
 static void portux920t_class_init(ObjectClass *oc, void *data)
@@ -321,9 +313,8 @@ type_init(portux920t_machine_init);
 static void portux920mc_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
-    SysBusDeviceClass *k = SYS_BUS_DEVICE_CLASS(klass);
 
-    k->init = portux920mc_init;
+    dc->realize = portux920mc_realize;
     dc->reset = portux920mc_reset;
     dc->vmsd = &vmstate_portux920mc;
 }

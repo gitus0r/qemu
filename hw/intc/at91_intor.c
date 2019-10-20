@@ -23,6 +23,8 @@
  */
 
 #include "qemu/osdep.h"
+#include "migration/vmstate.h"
+#include "hw/irq.h"
 #include "hw/sysbus.h"
 
 #define TYPE_AT91_INTOR "at91_intor"
