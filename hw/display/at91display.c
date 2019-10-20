@@ -3,6 +3,7 @@
  */
 
 #include "qemu/osdep.h"
+#include "migration/vmstate.h"
 #include "hw/sysbus.h"
 
 #define TYPE_AT91DISPLAY "at91display"
