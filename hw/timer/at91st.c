@@ -3,9 +3,13 @@
  */
 
 #include "qemu/osdep.h"
+#include "qemu-common.h"
+#include "migration/vmstate.h"
+#include "sysemu/sysemu.h"
+#include "sysemu/runstate.h"
+#include "hw/irq.h"
 #include "hw/sysbus.h"
 #include "qemu/timer.h"
-#include "sysemu/sysemu.h"
 
 #define TYPE_AT91ST "at91st"
 #define AT91ST(obj) OBJECT_CHECK(at91st_state, (obj), TYPE_AT91ST)

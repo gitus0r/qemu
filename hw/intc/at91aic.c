@@ -12,6 +12,8 @@
  */
 
 #include "qemu/osdep.h"
+#include "hw/irq.h"
+#include "migration/vmstate.h"
 #include <stdio.h>
 #include <stddef.h>
 
