@@ -37,8 +37,10 @@
 
 #include "qemu/osdep.h"
 #include "hw/sysbus.h"
+#include "hw/qdev-properties.h"
+#include "migration/vmstate.h"
 #include "net/net.h"
-#include "hw/devices.h"
+#include "hw/net/at91emac.h"
 
 /* #define DEBUG_EMAC */
 
@@ -701,13 +703,12 @@ void at91emac_init1(NICInfo *nd, uint32_t base, qemu_irq irq)
     sysbus_connect_irq(s, 0, irq);
 }
 
-static int at91emac_init(SysBusDevice *sbd)
+static void at91emac_realize(DeviceState *dev, Error **errp)
 {
-    DeviceState *dev = DEVICE(sbd);
     at91emac_state *s = AT91EMAC(dev);
     memory_region_init_io(&s->iomem, OBJECT(s), &at91emac_mem_ops, s, "at91emac", 0x1000);
-    sysbus_init_mmio(sbd, &s->iomem);
-    sysbus_init_irq(sbd, &s->irq);
+    sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
+    sysbus_init_irq(SYS_BUS_DEVICE(dev), &s->irq);
     qemu_macaddr_default_if_unset(&s->conf.macaddr);
     s->nic = qemu_new_nic(&net_at91emac_info, &s->conf,
                           object_get_typename(OBJECT(dev)), dev->id, s);
@@ -717,14 +718,12 @@ static int at91emac_init(SysBusDevice *sbd)
     s->sa1l=(s->conf.macaddr.a[3] << 24) | (s->conf.macaddr.a[2] << 16) | (s->conf.macaddr.a[1] << 8) | (s->conf.macaddr.a[0]);
     s->sa1h=(s->conf.macaddr.a[5] << 8) | (s->conf.macaddr.a[4]);
     at91emac_reset(dev);
-    return 0;
 }
 
 static void at91emac_class_init(ObjectClass *klass, void *data){
     DeviceClass *dc = DEVICE_CLASS(klass);
-    SysBusDeviceClass *k = SYS_BUS_DEVICE_CLASS(klass);
 
-    k->init = at91emac_init;
+    dc->realize = at91emac_realize;
     dc->reset = at91emac_reset;
     dc->vmsd = &vmstate_at91emac;
     dc->props = at91emac_properties;

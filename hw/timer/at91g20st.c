@@ -4,6 +4,11 @@
  */
 
 #include "qemu/osdep.h"
+#include "qemu-common.h"
+#include "sysemu/sysemu.h"
+#include "sysemu/runstate.h"
+#include "migration/vmstate.h"
+#include "hw/irq.h"
 #include "hw/sysbus.h"
 #include "qemu/timer.h"
 #include "qemu/cutils.h"
@@ -292,15 +297,15 @@ static const MemoryRegionOps at91g20st_ops = {
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
-static int at91g20st_init(SysBusDevice *dev)
+static void at91g20st_realize(DeviceState *dev, Error **erp)
 {
     at91g20st_state *s = AT91G20ST(dev);
     struct tm tm;
 
     memory_region_init_io(&s->iomem, OBJECT(s), &at91g20st_ops, s, "at91g20st", 0x30);
-    sysbus_init_mmio(dev, &s->iomem);
+    sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
 
-    sysbus_init_irq(dev, &s->irq);
+    sysbus_init_irq(SYS_BUS_DEVICE(dev), &s->irq);
 
     s->startup_real_time = s->time_last_change = qemu_clock_get_ns(QEMU_CLOCK_REALTIME); //Save the current timestamp
 
@@ -329,16 +334,13 @@ static int at91g20st_init(SysBusDevice *dev)
     s->wdt_cr=0x0;
     s->wdt_mr=0x3FFF2FFF;
     s->wdt_sr=0x0;
-
-    return 0;
 }
 
 static void at91g20st_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
-    SysBusDeviceClass *k = SYS_BUS_DEVICE_CLASS(klass);
 
-    k->init = at91g20st_init;
+    dc->realize = at91g20st_realize;
     dc->user_creatable = false; /* FIXME explain why */
     dc->vmsd = &vmstate_at91g20st;
 }

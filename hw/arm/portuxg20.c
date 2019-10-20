@@ -6,12 +6,13 @@
 
 #include "qemu/osdep.h"
 #include "cpu.h"
+#include "migration/vmstate.h"
 #include "hw/sysbus.h"
-#include "hw/arm/arm.h"
+#include "hw/arm/boot.h"
 #include "hw/boards.h"
 #include "exec/address-spaces.h"
 #include "net/net.h"
-#include "hw/devices.h"
+#include "hw/net/at91g20emac.h"
 
 /* Board init.  */
 static struct arm_boot_info portuxg20_binfo;
@@ -22,9 +23,6 @@ static void portuxg20_init(MachineState *machine)
 {
     Object *cpuobj;
     ram_addr_t ram_size = machine->ram_size;
-    const char *kernel_filename = machine->kernel_filename;
-    const char *kernel_cmdline = machine->kernel_cmdline;
-    const char *initrd_filename = machine->initrd_filename;
     ARMCPU *cpu;
     MemoryRegion *sysmem = get_system_memory();
     MemoryRegion *sram0 = g_new(MemoryRegion, 1); //internal 16kB Ram
@@ -102,12 +100,9 @@ static void portuxg20_init(MachineState *machine)
 
 
     portuxg20_binfo.ram_size = ram_size;
-    portuxg20_binfo.kernel_filename = kernel_filename;
-    portuxg20_binfo.kernel_cmdline = kernel_cmdline;
-    portuxg20_binfo.initrd_filename = initrd_filename;
     portuxg20_binfo.board_id = 0x88F; //auf seite arm.linux.org.uk/developer/machines/ zu finden
     portuxg20_binfo.loader_start = 0x20000000; //Start executing at 0x20000000 instead of 0x0
-    arm_load_kernel(cpu, &portuxg20_binfo);
+    arm_load_kernel(cpu, machine, &portuxg20_binfo);
 }
 
 static void portuxg20_class_init(ObjectClass *oc, void *data)
