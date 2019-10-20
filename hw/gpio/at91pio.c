@@ -3,6 +3,7 @@
  */
 
 #include "qemu/osdep.h"
+#include "migration/vmstate.h"
 #include "hw/sysbus.h"
 #include "chardev/char-fe.h"
 
@@ -329,7 +330,7 @@ static void at91pio_init(Object *obj)
     s->display_pos=0;
     //Telnet-Client for LCD and LED Output. Port 44444
     if(pio_telnet!=0){
-        char_kbs = qemu_chr_new("kbs_telnet", "telnet:localhost:44444,server");
+        char_kbs = qemu_chr_new("kbs_telnet", "telnet:localhost:44444,server", NULL);
     }
 }
 
