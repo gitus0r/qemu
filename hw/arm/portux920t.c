@@ -142,14 +142,17 @@ static const MemoryRegionOps portux920mc_ops = {
 /*
  * Initialization of the memory regions and the IRQ
  */
-static void portux920mc_realize(DeviceState *dev, Error **errp)
+static void portux920mc_init(Object *obj)
 {
-    portux920mc_state *s = PORTUX920MC(dev);
+    portux920mc_state *s = PORTUX920MC(obj);
+    SysBusDevice *dev = SYS_BUS_DEVICE(obj);
 
     memory_region_init_io(&s->iomem, OBJECT(s), &portux920mc_ops, s, "portux920mc", 0x50);
     sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
     sysbus_init_irq(SYS_BUS_DEVICE(dev), &s->irq);
-
+}
+static void portux920mc_realize(DeviceState *dev, Error **errp)
+{
     portux920mc_reset(dev);
 }
 
@@ -322,6 +325,7 @@ static const TypeInfo portux920mc_info = {
     .name          = TYPE_PORTUX920MC,
     .parent        = TYPE_SYS_BUS_DEVICE,
     .instance_size = sizeof(portux920mc_state),
+    .instance_init = portux920mc_init,
     .class_init    = portux920mc_class_init,
 };
 
