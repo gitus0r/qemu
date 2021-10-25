@@ -101,3 +101,13 @@ exynos_uart_rx_timeout(uint32_t channel, uint32_t stat, uint32_t intsp) "UART%d:
 
 # cadence_uart.c
 cadence_uart_baudrate(unsigned baudrate) "baudrate %u"
+
+# at91dbgu.c
+at91dbgu_send(int size, const uint8_t *buf) "buf: %*s"
+at91dbgu_write(int offset, uint64_t value, unsigned size) "offset %d, val %" PRIu64 ", size %u"
+at91dbgu_read(int offset, unsigned size) "offset %d, size %u"
+at91dbgu_receive(int size, char *buf) "buf: %*s"
+at91dbgu_receive_s_cr(uint32_t cr) "cr: %" PRIu32
+at91dbgu_can_receive(uint32_t rxrdy) "rxrdy: %" PRIu32
+at91dbgu_update(char *s) "%s"
+at91dbgu_event(int ev) "event: %d"
