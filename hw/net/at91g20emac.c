@@ -239,7 +239,7 @@ static uint32_t address_match(at91g20emac_state *s, const uint8_t *buf)
     return 0;
 }
 
-static int at91g20emac_can_receive(NetClientState *nc)
+static bool at91g20emac_can_receive(NetClientState *nc)
 {
     at91g20emac_state *s = qemu_get_nic_opaque(nc);
     return !!(s->ctl & CTL_RE);
@@ -695,9 +695,8 @@ void at91g20emac_init1(NICInfo *nd, uint32_t base, qemu_irq irq)
     SysBusDevice *s;
 
     qemu_check_nic_model(nd, "at91g20emac");
-    dev = qdev_create(NULL, "at91g20emac");
+    dev = qdev_new("at91g20emac");
     qdev_set_nic_properties(dev, nd);
-    qdev_init_nofail(dev);
     s = SYS_BUS_DEVICE(dev);
     sysbus_mmio_map(s, 0, base);
     sysbus_connect_irq(s, 0, irq);
@@ -726,7 +725,7 @@ static void at91g20emac_class_init(ObjectClass *klass, void *data){
     dc->realize = at91g20emac_realize;
     dc->reset = at91g20emac_reset;
     dc->vmsd = &vmstate_at91g20emac;
-    dc->props = at91g20emac_properties;
+    device_class_set_props(dc, at91g20emac_properties);
 }
 
 

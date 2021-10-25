@@ -187,7 +187,7 @@ static void portux920t_init(MachineState *machine)
     /* Warning! This is in fact just a copy of the arm926 with a V4T chip set
        instead of a V5! */
     cpuobj = object_new(machine->cpu_type);
-    object_property_set_bool(cpuobj, true, "realized", &error_fatal);
+    object_property_set_bool(cpuobj, "realized", true, &error_fatal);
     
     cpu = ARM_CPU(cpuobj);
     if (!cpu) {
@@ -212,8 +212,7 @@ static void portux920t_init(MachineState *machine)
     memory_region_add_subregion(sysmem, 0x20000000, ram2);
 
     /* Initialize Memory Controller */
-    dev = qdev_create(NULL, "portux920mc");
-    qdev_init_nofail(dev);
+    dev = qdev_new("portux920mc");
     sysbus_mmio_map((SysBusDevice *)dev, 0, 0xFFFFFF00);
 
 
