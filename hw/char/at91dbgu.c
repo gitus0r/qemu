@@ -12,6 +12,7 @@
 #include "hw/irq.h"
 #include "hw/sysbus.h"
 #include "chardev/char-fe.h"
+#include "trace.h"
 
 #define TYPE_AT91DBGU "at91dbgu"
 #define AT91DBGU(obj) OBJECT_CHECK(at91dbgu_state, (obj), TYPE_AT91DBGU)
@@ -135,11 +136,15 @@ static void at91dbgu_send(void *opaque, const uint8_t *buf, int size)
 {
     at91dbgu_state *s = opaque;
 
+    trace_at91dbgu_send(size, buf);
+
     qemu_chr_fe_write(&s->chr, buf, size);
 }
 
 static void at91dbgu_update(at91dbgu_state *s)
 {
+   trace_at91dbgu_update((char*)"update");
+
     /* process PDC receive */
     if (s->periph_rcr == 0 && s->periph_rncr != 0) {
         s->periph_rcr = s->periph_rncr;
@@ -204,7 +209,10 @@ static void at91dbgu_receive(void *opaque, const uint8_t *buf, int size)
 {
     at91dbgu_state *s = opaque;
 
+    trace_at91dbgu_receive(size, (char*)buf);
+
     if (!(s->cr & RXEN)) {
+        trace_at91dbgu_receive_s_cr(s->cr);
         return;
     }
 
@@ -220,6 +228,10 @@ static void at91dbgu_receive(void *opaque, const uint8_t *buf, int size)
 static int at91dbgu_can_receive(void *opaque)
 {
     at91dbgu_state *s = opaque;
+
+    trace_at91dbgu_can_receive(s->sr & RXRDY);
+
+
     if (s->sr & RXRDY) {
         return 0;
     } else {
@@ -229,11 +241,14 @@ static int at91dbgu_can_receive(void *opaque)
 
 static void at91dbgu_event(void *opaque, QEMUChrEvent event)
 {
+    trace_at91dbgu_event(event);
 }
 
 static uint64_t at91dbgu_read(void *opaque, hwaddr offset, unsigned size)
 {
     at91dbgu_state *s = opaque;
+
+    trace_at91dbgu_read(offset, size);
 
     switch (offset) {
         case DBGU_MR: // Mode Register
@@ -280,6 +295,8 @@ static uint64_t at91dbgu_read(void *opaque, hwaddr offset, unsigned size)
 static void at91dbgu_write(void *opaque, hwaddr offset, uint64_t value, unsigned size)
 {
     at91dbgu_state *s = opaque;
+
+    trace_at91dbgu_write(offset, value, size);
 
     switch (offset) {
         case DBGU_CR: // Control Register
