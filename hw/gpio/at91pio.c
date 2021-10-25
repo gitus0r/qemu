@@ -5,10 +5,18 @@
 #include "qemu/osdep.h"
 #include "migration/vmstate.h"
 #include "hw/sysbus.h"
+#include "hw/misc/led.h"
 #include "chardev/char-fe.h"
 
 #define TYPE_AT91PIO "at91pio"
 #define AT91PIO(obj) OBJECT_CHECK(at91pio_state, (obj), TYPE_AT91PIO)
+
+enum {
+	LED_YELLOW = 0,
+	LED_GREEN,
+	LED_RED,
+	MAX_LED,
+};
 
 typedef struct {
     SysBusDevice parent_obj;
@@ -30,6 +38,8 @@ typedef struct {
     //Display
     uint32_t display_pos;
     uint8_t display[128];
+
+    LEDState *led[MAX_LED];
 
 } at91pio_state;
 
@@ -252,25 +262,6 @@ static void at91pio_write(void *opaque, hwaddr offset, uint64_t value, unsigned 
                 qemu_chr_fe_printf(char_kbs->be,"\033[2J\033[1;1H");
 
                 /**
-                 * LED CONTROL
-                 */
-                char yellow_led[]="\033[1;43m\033[1;30m \033[0m";
-                if((piob_ctrl&0x8000000)!=0x8000000){
-                    strcpy(yellow_led, "\033[1;40m\033[1;33m_\033[0m");
-                }
-
-                char green_led[]="\033[1;42m\033[1;30m \033[0m";
-                if((pioc_ctrl&2)!=2){
-                    strcpy(green_led, "\033[1;40m\033[1;32m_\033[0m");
-                }
-
-                char red_led[]="\033[1;41m\033[1;30m \033[0m";
-                if((pioc_ctrl&1)!=1){
-                    strcpy(red_led, "\033[1;40m\033[1;31m_\033[0m");
-                }
-                qemu_chr_fe_printf(char_kbs->be,"\r\nLED: %s%s%s",yellow_led, green_led, red_led);
-
-                /**
                  * DISPLAY
                  */
 
@@ -285,6 +276,14 @@ static void at91pio_write(void *opaque, hwaddr offset, uint64_t value, unsigned 
                 }
                 qemu_chr_fe_printf(char_kbs->be,"*END OF DISPLAY*\r\n");
             }
+
+
+           /**
+            * LED CONTROL
+            */
+           led_set_state(s->led[LED_YELLOW], (piob_ctrl&0x8000000)!=0x8000000);
+           led_set_state(s->led[LED_GREEN], (pioc_ctrl&2)!=2);
+           led_set_state(s->led[LED_RED], (pioc_ctrl&1)!=1);
 }
 
 
@@ -328,10 +327,21 @@ static void at91pio_init(Object *obj)
         s->display[i]='\0';
     }
     s->display_pos=0;
-    //Telnet-Client for LCD and LED Output. Port 44444
-    if(pio_telnet!=0){
-        char_kbs = qemu_chr_new("kbs_telnet", "telnet:localhost:44444,server", NULL);
-    }
+}
+
+static void realize_at91pio(DeviceState *dev, Error **errp)
+{
+	at91pio_state *s = AT91PIO(dev);
+
+	s->led[LED_YELLOW] = led_create_simple(OBJECT(dev), GPIO_POLARITY_ACTIVE_HIGH,
+	                              LED_COLOR_YELLOW, "LED_YELLOW");
+
+	s->led[LED_GREEN] = led_create_simple(OBJECT(dev), GPIO_POLARITY_ACTIVE_HIGH,
+	                              LED_COLOR_GREEN, "LED_GEEN");
+
+	s->led[LED_RED] = led_create_simple(OBJECT(dev), GPIO_POLARITY_ACTIVE_HIGH,
+	                              LED_COLOR_RED, "LED_RED");
+
 }
 
 static void at91pio_class_init(ObjectClass *klass, void *data)
@@ -339,6 +349,7 @@ static void at91pio_class_init(ObjectClass *klass, void *data)
     DeviceClass *dc = DEVICE_CLASS(klass);
     
     dc->vmsd = &vmstate_at91pio;
+    dc->realize = &realize_at91pio;
 }
 
 static const TypeInfo at91pio_info = {

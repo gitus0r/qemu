@@ -186,4 +186,8 @@ config SIFIVE_U_PRCI
 config VIRT_CTRL
     bool
 
+config PORTUX
+    bool
+    select LED
+
 source macio/Kconfig
