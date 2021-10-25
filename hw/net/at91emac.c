@@ -702,12 +702,18 @@ void at91emac_init1(NICInfo *nd, uint32_t base, qemu_irq irq)
     sysbus_connect_irq(s, 0, irq);
 }
 
+static void at91emac_init(Object *obj)
+{
+    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
+    at91emac_state *s = AT91EMAC(obj);
+    memory_region_init_io(&s->iomem, OBJECT(s), &at91emac_mem_ops, s, "at91emac", 0x1000);
+    sysbus_init_mmio(sbd, &s->iomem);
+    sysbus_init_irq(sbd, &s->irq);
+}
 static void at91emac_realize(DeviceState *dev, Error **errp)
 {
     at91emac_state *s = AT91EMAC(dev);
-    memory_region_init_io(&s->iomem, OBJECT(s), &at91emac_mem_ops, s, "at91emac", 0x1000);
-    sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
-    sysbus_init_irq(SYS_BUS_DEVICE(dev), &s->irq);
+
     qemu_macaddr_default_if_unset(&s->conf.macaddr);
     s->nic = qemu_new_nic(&net_at91emac_info, &s->conf,
                           object_get_typename(OBJECT(dev)), dev->id, s);
@@ -732,6 +738,7 @@ static const TypeInfo at91emac_info = {
     .name = TYPE_AT91EMAC,
     .parent = TYPE_SYS_BUS_DEVICE,
     .instance_size = sizeof(at91emac_state),
+    .instance_init = at91emac_init,
     .class_init = at91emac_class_init,
 };
 

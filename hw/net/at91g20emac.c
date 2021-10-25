@@ -702,12 +702,19 @@ void at91g20emac_init1(NICInfo *nd, uint32_t base, qemu_irq irq)
     sysbus_connect_irq(s, 0, irq);
 }
 
+static void at91g20emac_init(Object *obj)
+{
+    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
+    at91g20emac_state *s = AT91G20EMAC(obj);
+
+    memory_region_init_io(&s->iomem, OBJECT(s), &at91g20emac_mem_ops, s, "at91g20emac", 0x1000);
+    sysbus_init_mmio(sbd, &s->iomem);
+    sysbus_init_irq(sbd, &s->irq);
+}
 static void at91g20emac_realize(DeviceState *dev, Error **erp)
 {
     at91g20emac_state *s = AT91G20EMAC(dev);
-    memory_region_init_io(&s->iomem, OBJECT(s), &at91g20emac_mem_ops, s, "at91g20emac", 0x1000);
-    sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
-    sysbus_init_irq(SYS_BUS_DEVICE(dev), &s->irq);
+
     qemu_macaddr_default_if_unset(&s->conf.macaddr);
     s->nic = qemu_new_nic(&net_at91g20emac_info, &s->conf,
                           object_get_typename(OBJECT(dev)), dev->id, s);
@@ -733,6 +740,7 @@ static const TypeInfo at91g20emac_info = {
     .name = TYPE_AT91G20EMAC,
     .parent = TYPE_SYS_BUS_DEVICE,
     .instance_size = sizeof(at91g20emac_state),
+    .instance_init = at91g20emac_init,
     .class_init = at91g20emac_class_init,
 };
 
