@@ -8,6 +8,7 @@
 #include "qemu/osdep.h"
 #include "migration/vmstate.h"
 #include "hw/qdev-properties.h"
+#include "hw/qdev-properties-system.h"
 #include "hw/irq.h"
 #include "hw/sysbus.h"
 #include "chardev/char-fe.h"
@@ -226,7 +227,7 @@ static int at91dbgu_can_receive(void *opaque)
     }
 }
 
-static void at91dbgu_event(void *opaque, int event)
+static void at91dbgu_event(void *opaque, QEMUChrEvent event)
 {
 }
 
@@ -417,7 +418,7 @@ static void at91dbgu_class_init(ObjectClass *klass, void *data)
     
     dc->realize = at91dbgu_realize;
     dc->vmsd = &vmstate_at91dbgu;
-    dc->props = at91dbgu_properties;
+    device_class_set_props(dc, at91dbgu_properties);
 }
 
 static const TypeInfo at91dbgu_info = {

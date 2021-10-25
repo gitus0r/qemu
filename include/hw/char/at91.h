@@ -24,10 +24,9 @@ static inline DeviceState *at91dbgu_create(hwaddr addr,
     DeviceState *dev;
     SysBusDevice *s;
 
-    dev = qdev_create(NULL, "at91dbgu");
+    dev = qdev_new("at91dbgu");
     s = SYS_BUS_DEVICE(dev);
     qdev_prop_set_chr(dev, "chardev", chr);
-    qdev_init_nofail(dev);
     sysbus_mmio_map(s, 0, addr);
     sysbus_connect_irq(s, 0, irq);
 
@@ -41,10 +40,9 @@ static inline DeviceState *at91usart_create(hwaddr addr,
     DeviceState *dev;
     SysBusDevice *s;
 
-    dev = qdev_create(NULL, "at91usart");
+    dev = qdev_new("at91usart");
     s = SYS_BUS_DEVICE(dev);
     qdev_prop_set_chr(dev, "chardev", chr);
-    qdev_init_nofail(dev);
     sysbus_mmio_map(s, 0, addr);
     sysbus_connect_irq(s, 0, irq);
 

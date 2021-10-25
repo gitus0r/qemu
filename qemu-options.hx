@@ -1972,12 +1972,11 @@ ERST
 DEF("piotelnet", 0, QEMU_OPTION_piotelnet,
     "-piotelnet	open a telnet server at port 444444 for the LEDs and the LCD on the Portux920T-MiniPC. Only useful there\n",
     QEMU_ARCH_ALL)
-STEXI
-@item -piotelnet
-@findex -piotelnet
-Opens a telnet server at port 444444 for the LEDs and the LCD on
-the Portux920T-MiniPC. Only useful there.
-ETEXI
+SRST
+``-piotelnet``
+    Opens a telnet server at port 444444 for the LEDs and the LCD on
+    the Portux920T-MiniPC. Only useful there.
+ERST
 
 DEF("curses", 0, QEMU_OPTION_curses,
     "-curses         shorthand for -display curses\n",

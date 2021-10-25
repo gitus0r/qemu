@@ -4,6 +4,7 @@
 
 #include "qemu/osdep.h"
 #include "hw/qdev-properties.h"
+#include "hw/qdev-properties-system.h"
 #include "hw/irq.h"
 #include "migration/vmstate.h"
 #include "hw/sysbus.h"
@@ -263,7 +264,7 @@ static void at91usart_receive(void *opaque, const uint8_t *buf, int size)
         }
 }
 
-static void at91usart_event(void *opaque, int event)
+static void at91usart_event(void *opaque, QEMUChrEvent event)
 {
 
 }
@@ -320,7 +321,7 @@ static void at91usart_class_init(ObjectClass *klass, void *data)
 
     dc->realize = at91usart_realize;
     dc->vmsd = &vmstate_at91usart;
-    dc->props = at91usart_properties;
+    device_class_set_props(dc, at91usart_properties);
 }
 
 static const TypeInfo at91usart_info = {
