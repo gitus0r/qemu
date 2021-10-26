@@ -6,6 +6,7 @@
 #include "migration/vmstate.h"
 #include "hw/sysbus.h"
 #include "chardev/char-fe.h"
+#include "trace.h"
 
 #define TYPE_AT91PIO "at91pio"
 #define AT91PIO(obj) OBJECT_CHECK(at91pio_state, (obj), TYPE_AT91PIO)
@@ -88,6 +89,7 @@ static void at91pio_write(void *opaque, hwaddr offset, uint64_t value, unsigned 
     //printf("\nPIO WRITE: %X | %X",offset, value);
     //fflush(0);
     at91pio_state *s = (at91pio_state *)opaque;
+    trace_at91pio_setreg(0xfffff400+offset, value);
 
     uint32_t pioc_ctrl, piob_ctrl;
 
@@ -208,9 +210,15 @@ static void at91pio_write(void *opaque, hwaddr offset, uint64_t value, unsigned 
                     break;
                 case 0x230: //set output data register
                     s->piob_odsr = s->piob_odsr|value;
+                    if (s->piob_osr & s->piob_psr & s->piob_odsr & (1<<27)) {
+                        trace_at91pio_led((char*)"yellow", (char*)"on");
+                    }
                     break;
                 case 0x234: //clear output data register
                     s->piob_odsr = s->piob_odsr&(~value);
+                    if (!(s->piob_osr & s->piob_psr & s->piob_odsr & (1<<27))) {
+                        trace_at91pio_led((char*)"yellow", (char*)"off");
+                    }
                     break;
                 case 0x270: //TODO Micha? Sind das Lampen? Pio ASR
                     break;
@@ -233,9 +241,21 @@ static void at91pio_write(void *opaque, hwaddr offset, uint64_t value, unsigned 
                 break;
             case 0x430: //set output data register
                 s->pioc_odsr = s->pioc_odsr|value;
+                if (s->pioc_osr & s->pioc_psr & s->pioc_odsr & (1<<1)) {
+                    trace_at91pio_led((char*)"red", (char*)"on");
+                }
+                if (s->pioc_osr & s->pioc_psr & s->pioc_odsr & (1<<2)) {
+                    trace_at91pio_led((char*)"green", (char*)"on");
+                }
                 break;
             case 0x434: //clear output data register
                 s->pioc_odsr = s->pioc_odsr&(~value);
+                if (s->pioc_osr & s->pioc_psr & s->pioc_odsr & (1<<1)) {
+                    trace_at91pio_led((char*)"red", (char*)"off");
+                }
+                if (s->pioc_osr & s->pioc_psr & s->pioc_odsr & (1<<2)) {
+                    trace_at91pio_led((char*)"green", (char*)"off");
+                }
                 break;
             case 0x470: //TODO Micha? Sind das Lampen? Pio ASR
                 break;
