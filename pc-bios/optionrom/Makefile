@@ -13,7 +13,7 @@ $(call set-vpath, $(SRC_PATH)/pc-bios/optionrom)
 ifeq ($(lastword $(filter -O%, -O0 $(CFLAGS))),-O0)
 override CFLAGS += -O2
 endif
-override CFLAGS += -march=i486
+override CFLAGS += -march=i486 -fcf-protection=none
 
 # Drop -fstack-protector and the like
 QEMU_CFLAGS := $(filter -W%, $(QEMU_CFLAGS)) $(CFLAGS_NOPIE) -ffreestanding
