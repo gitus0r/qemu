@@ -241,19 +241,19 @@ static void at91pio_write(void *opaque, hwaddr offset, uint64_t value, unsigned 
                 break;
             case 0x430: //set output data register
                 s->pioc_odsr = s->pioc_odsr|value;
-                if (s->pioc_osr & s->pioc_psr & s->pioc_odsr & (1<<1)) {
+                if (s->pioc_osr & s->pioc_psr & s->pioc_odsr & (1<<0)) {
                     trace_at91pio_led((char*)"red", (char*)"on");
                 }
-                if (s->pioc_osr & s->pioc_psr & s->pioc_odsr & (1<<2)) {
+                if (s->pioc_osr & s->pioc_psr & s->pioc_odsr & (1<<1)) {
                     trace_at91pio_led((char*)"green", (char*)"on");
                 }
                 break;
             case 0x434: //clear output data register
                 s->pioc_odsr = s->pioc_odsr&(~value);
-                if (s->pioc_osr & s->pioc_psr & s->pioc_odsr & (1<<1)) {
+                if (s->pioc_osr & s->pioc_psr & s->pioc_odsr & (1<<0)) {
                     trace_at91pio_led((char*)"red", (char*)"off");
                 }
-                if (s->pioc_osr & s->pioc_psr & s->pioc_odsr & (1<<2)) {
+                if (s->pioc_osr & s->pioc_psr & s->pioc_odsr & (1<<1)) {
                     trace_at91pio_led((char*)"green", (char*)"off");
                 }
                 break;
